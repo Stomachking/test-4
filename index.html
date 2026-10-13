@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Signal Yard</title>
+<meta name="description" content="An interactive, isometric map that follows website visitors from emails, ads, search and social into the site: who signs in, what they read, how far they browse and who converts.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app" id="app">
+  <header>
+    <div class="brand">
+      <h1>Signal Yard</h1>
+      <p>Follow your visitors from the first email or ad to what they do on the site</p>
+      <span class="pill" id="srcPill"><span class="dot"></span><span id="srcTxt">Sample data</span></span>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><span class="lbl" id="kVisitsLbl">Visits</span><span class="val" id="kVisits">—</span></div>
+      <div class="kpi"><span class="lbl">Signed in</span><span class="val" id="kLogin">—</span></div>
+      <div class="kpi"><span class="lbl">Converted</span><span class="val" id="kConv">—</span></div>
+      <div class="kpi"><span class="lbl">Conversion rate</span><span class="val" id="kCvr">—</span></div>
+      <button id="bDrawer" type="button" aria-pressed="false">Numbers &amp; glossary</button>
+    </div>
+  </header>
+
+  <div class="filters">
+    <div class="fg follow"><span class="fl" id="lFollow">Follow visitors from</span><div class="chips" id="fFollow" role="group" aria-labelledby="lFollow"></div></div>
+    <div class="fg"><span class="fl" id="lRegion">Region</span><div class="chips" id="fRegion" role="group" aria-labelledby="lRegion"></div></div>
+    <div class="fg"><label for="fCountry">Country</label><select id="fCountry"></select></div>
+    <div class="fg"><span class="fl" id="lDevice">Device</span><div class="chips" id="fDevice" role="group" aria-labelledby="lDevice"></div></div>
+    <div class="fg"><span class="fl" id="lUser">Users</span><div class="chips" id="fUser" role="group" aria-labelledby="lUser"></div></div>
+    <div class="fg"><span class="fl" id="lAge">Age group</span><div class="chips" id="fAge" role="group" aria-labelledby="lAge"></div></div>
+    <div class="fg" id="dateGroup"><label for="fDay">Date</label>
+      <div class="daterow">
+        <button class="chip" id="fAllDays" type="button" aria-pressed="true">All days</button>
+        <input type="range" id="fDay" min="0" max="0" value="0">
+        <span class="daylbl" id="fDayLbl">—</span>
+        <button id="fPlay" type="button">Play</button>
+      </div>
+    </div>
+    <button class="freset" id="fReset" type="button">Clear filters</button>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="labels" id="labelsOut"></div>
+    <div class="labels" id="labelsIn" hidden></div>
+    <div class="topleft">
+      <div class="seg" role="group" aria-label="Place">
+        <button id="goOut" type="button" aria-pressed="true">Outside: where they come from</button>
+        <button id="goIn" type="button" aria-pressed="false">Inside the site</button>
+      </div>
+      <span class="viewsum" id="viewSum">All visitors</span>
+    </div>
+    <div class="story" id="story" aria-live="polite"></div>
+    <div class="legend" id="legend"></div>
+    <div class="fader" id="fader"></div>
+  </div>
+
+  <aside>
+    <div class="tabs" role="tablist" aria-label="Numbers">
+      <button class="tab" role="tab" id="t-channels" aria-controls="p-channels" aria-selected="true">Channels</button>
+      <button class="tab" role="tab" id="t-audience" aria-controls="p-audience" aria-selected="false">Audience</button>
+      <button class="tab" role="tab" id="t-geo" aria-controls="p-geo" aria-selected="false">Geography</button>
+      <button class="tab" role="tab" id="t-gloss" aria-controls="p-gloss" aria-selected="false">Glossary</button>
+      <button class="tab" role="tab" id="t-data" aria-controls="p-data" aria-selected="false">Data</button>
+    </div>
+
+    <div class="tabpanel" role="tabpanel" id="p-channels" aria-labelledby="t-channels">
+      <section>
+        <h2>Channels by tier</h2>
+        <p class="hint">Visits per day for the current filters. Click a row to follow that source on the map.</p>
+        <div class="tiers" id="tiers"></div>
+      </section>
+    </div>
+    <div class="tabpanel" role="tabpanel" id="p-audience" aria-labelledby="t-audience" hidden>
+      <p class="hint">Each list ignores its own filter so you can compare options. Click a bar to filter by it.</p>
+      <section><h2>Age group</h2><div class="bkhead"><span>Group</span><span></span><span>Visits · CVR</span></div><div class="bks" id="bkAge"></div></section>
+      <section><h2>Device type</h2><div class="bkhead"><span>Device</span><span></span><span>Visits · CVR</span></div><div class="bks" id="bkDevice"></div></section>
+      <section><h2>Internal vs external</h2><div class="bkhead"><span>Users</span><span></span><span>Visits · CVR</span></div><div class="bks" id="bkUser"></div></section>
+    </div>
+    <div class="tabpanel" role="tabpanel" id="p-geo" aria-labelledby="t-geo" hidden>
+      <p class="hint">Click a region or country to filter the whole page by it.</p>
+      <section><h2>Region</h2><div class="bkhead"><span>Region</span><span></span><span>Visits · CVR</span></div><div class="bks" id="bkRegion"></div></section>
+      <section><h2>Countries</h2><div class="bkhead"><span>Country</span><span></span><span>Visits · CVR</span></div><div class="bks" id="bkCountry"></div></section>
+    </div>
+    <div class="tabpanel" role="tabpanel" id="p-gloss" aria-labelledby="t-gloss" hidden>
+      <p class="hint">What each thing on this page is called in Adobe Analytics, and where the number comes from. Channels come from Marketing Channel processing rules, checked top to bottom; the first match wins. Paid / Owned / Earned is not built in: add it as a classification on the Marketing Channel dimension.</p>
+      <div class="gloss">
+        <div class="gtier" style="--t:var(--t-paid)">
+          <h3>Paid</h3>
+          <article style="--c:var(--c-paidsearch)"><h4>Paid search <code>Paid Search</code></h4><p>A click on a search ad: search-engine referrer plus your paid parameter, such as <code>?cid=ps_brand</code>. Put paid rules above Natural Search and Social Networks.</p></article>
+          <article style="--c:var(--c-display)"><h4>Programmatic <code>Display</code></h4><p>A click on a banner bought through a DSP, matched by a tracking-code prefix such as <code>?cid=dsp_retarget</code>.</p></article>
+        </div>
+        <div class="gtier" style="--t:var(--t-owned)">
+          <h3>Owned</h3>
+          <article style="--c:var(--c-email)"><h4>Email <code>Email</code></h4><p>Matched by a tracking code in the link, such as <code>?cid=em_oct_launch</code>.</p></article>
+          <article style="--c:var(--c-direct)"><h4>Direct <code>Direct</code></h4><p>No referrer: a typed URL or a bookmark. Leave "Override last-touch channel" off for Direct.</p></article>
+        </div>
+        <div class="gtier" style="--t:var(--t-earned)">
+          <h3>Earned</h3>
+          <article style="--c:var(--c-search)"><h4>Organic search <code>Natural Search</code></h4><p>A search-engine referrer with no paid tracking code.</p></article>
+          <article style="--c:var(--c-social)"><h4>Social <code>Social Networks</code></h4><p>A referring domain on the list of social sites.</p></article>
+          <article style="--c:var(--c-referral)"><h4>Referral <code>Referring Domains</code></h4><p>Any other outside site. A catch-all rule near the bottom of the list.</p></article>
+        </div>
+        <div class="gtier" style="--t:var(--fg)">
+          <h3>Before the visit</h3>
+          <p>Adobe Analytics only sees people once they land on the site. These numbers come from the platforms that sent them, joined on campaign or tracking code.</p>
+          <dl class="terms">
+            <dt>Emails sent, opened</dt><dd>From your email platform, such as Adobe Journey Optimizer, Adobe Campaign or another email service.</dd>
+            <dt>Ad views</dt><dd>Impressions from Google Ads, your DSP or Adobe Advertising.</dd>
+            <dt>Search views</dt><dd>Impressions in Google Search Console or Bing Webmaster Tools.</dd>
+            <dt>People reached</dt><dd>Reach from each social platform's insights.</dd>
+          </dl>
+        </div>
+        <div class="gtier" style="--t:var(--fg)">
+          <h3>Inside the site</h3>
+          <dl class="terms">
+            <dt>Visits</dt><dd>Adobe's word for sessions. A visit ends after 30 minutes of inactivity.</dd>
+            <dt>Left after one page</dt><dd>The <strong>Bounces</strong> and <strong>Bounce Rate</strong> metrics.</dd>
+            <dt>Signed in</dt><dd>Usually a custom success event fired on login, or an eVar that stores logged-in status.</dd>
+            <dt>Article reads</dt><dd>Page Views of each article in the <strong>Page</strong> dimension, or a custom "Content name" eVar with an "Article read" event.</dd>
+            <dt>Pages viewed</dt><dd>Page Views ÷ Visits. Adobe also has a <strong>Page Depth</strong> dimension.</dd>
+            <dt>Converted</dt><dd>Any success event you define, such as Orders or a lead-form event. Conversion rate is a calculated metric, such as Orders ÷ Visits.</dd>
+          </dl>
+        </div>
+        <div class="gtier" style="--t:var(--fg)">
+          <h3>Audience and geography</h3>
+          <dl class="terms">
+            <dt>Country</dt><dd>The built-in <strong>Countries</strong> dimension, from the visitor's IP address.</dd>
+            <dt>Region</dt><dd>Adobe's <strong>Regions</strong> dimension means states and provinces. For APAC / EMEA / LATAM, add a classification on Countries.</dd>
+            <dt>Device</dt><dd>The <strong>Mobile Device Type</strong> dimension. Desktops usually show as "Other".</dd>
+            <dt>Internal users</dt><dd>IP exclusions remove them from reports entirely. To compare, flag them with an eVar (corporate IP range or login domain) and a segment instead.</dd>
+            <dt>Age group</dt><dd>Not collected by Adobe. It comes from an eVar set at login, a <strong>Customer Attributes</strong> import, or an audience platform.</dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+    <div class="tabpanel" role="tabpanel" id="p-data" aria-labelledby="t-data" hidden>
+      <section>
+        <h2>Load your report</h2>
+        <div class="drop" id="drop">
+          <strong>Drop an .xlsx or .csv file here</strong>
+          <p>The file is read in your browser and is not uploaded anywhere.</p>
+          <input type="file" id="file" accept=".xlsx,.xls,.csv,text/csv">
+          <label class="btn" for="file">Choose file</label>
+        </div>
+        <div class="status" id="status" role="status"><b>Sample data loaded.</b> 30 days of invented traffic across 14 countries.</div>
+        <button id="useSample" type="button" hidden>Switch back to sample data</button>
+      </section>
+      <section>
+        <h2>Columns</h2>
+        <p class="hint">One row per combination, first sheet only. Names are matched loosely. Only Channel and Visits are required; each extra column switches on another part of the map.</p>
+        <dl class="cols">
+          <span class="grp">Who and when</span>
+          <dt>Date</dt><dd>Any date format. Use 2026-09-03 to avoid day/month mix-ups.</dd>
+          <dt>Channel</dt><dd>Adobe names (Natural Search, Paid Search, Display, Email, Direct, Social Networks, Referring Domains) or plain ones.</dd>
+          <dt>Region</dt><dd>APAC, EMEA, LATAM. Filled in from Country when missing.</dd>
+          <dt>Country</dt><dd>Country name.</dd>
+          <dt>Device</dt><dd>Desktop, Mobile, Tablet.</dd>
+          <dt>User type</dt><dd>Internal or External.</dd>
+          <dt>Age group</dt><dd>Any labels, such as 25–34.</dd>
+          <span class="grp">Before the visit</span>
+          <dt>Reach</dt><dd>Emails sent, ad impressions, search impressions or social reach for that row. Also matched: Sent, Impressions.</dd>
+          <dt>Opens</dt><dd>Email opens.</dd>
+          <span class="grp">On the site</span>
+          <dt>Visits</dt><dd>Required. "Sessions" also works.</dd>
+          <dt>Bounces</dt><dd>Visits that saw only one page.</dd>
+          <dt>Logins</dt><dd>Visits that signed in.</dd>
+          <dt>Page views</dt><dd>Total pages viewed.</dd>
+          <dt>Read: <i>title</i></dt><dd>One column per article, such as "Read: Pricing guide". The top three get a room.</dd>
+          <dt>Conversions</dt><dd>Purchases, sign-ups or leads.</dd>
+        </dl>
+<pre id="tpl">Date,Channel,Region,Country,Device,User type,Age group,Reach,Opens,Visits,Bounces,Logins,Page views,Read: Pricing guide,Read: Customer story,Conversions
+2026-09-01,Email,EMEA,Germany,Desktop,External,35-44,9800,2900,412,96,170,2150,60,140,24
+2026-09-01,Paid Search,APAC,Hong Kong,Mobile,External,25-34,13200,,410,170,38,1290,120,18,16</pre>
+        <button id="copyTpl" type="button">Copy template</button>
+      </section>
+    </div>
+  </aside>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="js/data.js"></script>
+<script src="js/story.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
